@@ -1,0 +1,221 @@
+# Paradise Honor admin (Sveltia CMS)
+# Docs: https://sveltiacms.app/en/docs
+#
+# Online editing saves straight to your GitHub repository, and your host rebuilds the site.
+# Before using it online, change `repo` below to your GitHub "username/repository".
+
+backend:
+  name: github
+  repo: rudhra13/paradise-honor
+  branch: main
+  # Sign in with a GitHub access token, so no login server is needed.
+  auth_methods: [token]
+  commit_messages:
+    create: 'Add {{collection}} “{{slug}}”'
+    update: 'Update {{collection}} “{{slug}}”'
+    delete: 'Delete {{collection}} “{{slug}}”'
+    uploadMedia: 'Upload “{{path}}”'
+    deleteMedia: 'Delete “{{path}}”'
+
+app_title: Paradise Honor admin
+site_url: https://paradisehonor.com
+display_url: https://paradisehonor.com
+logo:
+  src: /logo-96.webp
+
+media_folder: public/uploads
+public_folder: /uploads
+
+# Photos are converted to WebP and resized in the browser before upload, which keeps the site fast.
+media_libraries:
+  default:
+    config:
+      max_file_size: 15000000
+      slugify_filename: true
+      transformations:
+        raster_image:
+          format: webp
+          quality: 82
+          width: 1200
+
+collections:
+  # ---------------------------------------------------------------- Products
+  - name: products
+    label: Products
+    label_singular: Product
+    icon: inventory_2
+    description: Everything in the product sheets and on the Products page. Drag to reorder within a category.
+    folder: src/content/products
+    format: json
+    extension: json
+    create: true
+    delete: true
+    duplicate: true
+    identifier_field: name
+    slug: '{{slug}}'
+    summary: '{{code}} {{name}}'
+    thumbnail: images
+    media_folder: /public/products
+    public_folder: /products
+    preview_path: 'products#product-{{slug}}'
+    view_groups:
+      groups:
+        - { name: category, label: Category, field: category }
+      default: category
+    sortable_fields:
+      fields: [order, name, code]
+      default: { field: order, direction: ascending }
+    reorder:
+      key: order
+      group: category
+    fields:
+      - { name: name, label: Product name, widget: string }
+      - name: category
+        label: Category
+        widget: select
+        options:
+          - { label: Hotel amenities, value: hotel }
+          - { label: 'Wipes, tissue & towels', value: wipes }
+          - { label: Personal care, value: skin }
+          - { label: Housekeeping, value: housekeeping }
+          - { label: Food & beverage, value: food }
+      - name: group
+        label: Sub-group
+        widget: select
+        required: false
+        options: [Classic 20 ml, Premium 30 ml, Guest accessories]
+        hint: Hotel amenities only. Shown as tabs in the product sheet.
+      - { name: code, label: Product code, widget: string, required: false, hint: 'For example SC-7. Shown as a badge on the photo.' }
+      - { name: tagline, label: Short line, widget: string, required: false, hint: 'Shown under the name, for example “20 ml range · 5 items”.' }
+      - { name: description, label: Description, widget: text }
+      - name: images
+        label: Photos
+        widget: image
+        multiple: true
+        min: 1
+        max: 6
+        hint: The first photo is the main one. Square or landscape photos on a light background work best.
+      - name: variants
+        label: Pack sizes and prices
+        label_singular: Pack size
+        widget: list
+        required: false
+        summary: '{{label}} · ₹{{price}} (MRP ₹{{mrp}})'
+        hint: Leave the prices empty to show “Price on request”.
+        fields:
+          - { name: label, label: Pack size, widget: string, hint: 'For example 350 ml dispenser, 10 L refill, 50 kg drum' }
+          - { name: price, label: Price (₹), widget: number, value_type: float, min: 0, required: false }
+          - { name: mrp, label: MRP (₹), widget: number, value_type: float, min: 0, required: false }
+          - { name: unit, label: Price unit, widget: string, required: false, hint: 'Optional, for example “per kg”' }
+      - name: contents
+        label: What’s inside
+        label_singular: Item
+        widget: list
+        required: false
+        hint: For kits. One item per row, for example “Shampoo 20 ml”.
+        field: { name: item, label: Item, widget: string }
+      - name: specs
+        label: Specifications
+        label_singular: Specification
+        widget: list
+        required: false
+        summary: '{{label}}: {{value}}'
+        fields:
+          - { name: label, label: Name, widget: string, hint: 'For example Size' }
+          - { name: value, label: Value, widget: string, hint: 'For example 30 × 30 cm' }
+      - { name: hidden, label: Hide from the website, widget: boolean, default: false, required: false }
+      - { name: order, label: Position, widget: number, value_type: int, required: false, hint: Set automatically when you drag to reorder. }
+
+  # ---------------------------------------------------------------- Blog
+  - name: blog
+    label: Blog posts
+    label_singular: Blog post
+    icon: article
+    folder: src/content/blog
+    extension: md
+    format: frontmatter
+    create: true
+    slug: '{{slug}}'
+    summary: '{{title}} · {{pubDate}}{{draft | ternary(" · DRAFT", "")}}'
+    media_folder: /public/blog
+    public_folder: /blog
+    preview_path: 'blog/{{slug}}'
+    sortable_fields:
+      fields: [pubDate, title]
+      default: { field: pubDate, direction: descending }
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: description, label: Summary, widget: text, hint: 'One or two sentences, up to 200 characters. Shown on cards and in Google.' }
+      - { name: pubDate, label: Publish date, widget: datetime, format: YYYY-MM-DD, time_format: false }
+      - { name: updatedDate, label: Updated date, widget: datetime, format: YYYY-MM-DD, time_format: false, required: false }
+      - { name: tag, label: Tag, widget: string, default: Insights }
+      - { name: author, label: Author, widget: string, default: Paradise Honor }
+      - { name: draft, label: Draft (hide from the website), widget: boolean, default: false, required: false }
+      - { name: body, label: Post, widget: markdown }
+
+  - divider: true
+
+  # ---------------------------------------------------------------- Single files
+  - name: site
+    label: Website
+    icon: tune
+    files:
+      - name: categories
+        label: Categories
+        file: src/data/categories.json
+        fields:
+          - name: categories
+            label: Category cards
+            label_singular: Category
+            widget: list
+            allow_add: false
+            allow_remove: false
+            allow_reorder: true
+            summary: '{{title}}'
+            fields:
+              - { name: id, label: ID, widget: string, readonly: true }
+              - { name: title, label: Title, widget: string }
+              - { name: short, label: Short name, widget: string, hint: Used on filter buttons. }
+              - { name: tag, label: Tag, widget: string }
+              - { name: body, label: Description, widget: text }
+              - { name: cta, label: Button text when there are no products yet, widget: string }
+              - name: tone
+                label: Card colour
+                widget: select
+                options:
+                  - { label: Forest green, value: forest }
+                  - { label: Butter, value: butter }
+                  - { label: White, value: white }
+                  - { label: Gold, value: gold }
+                  - { label: Deep green, value: deep }
+              - { name: wide, label: Wide card, widget: boolean, required: false }
+              - { name: soon, label: Show “Coming soon”, widget: boolean, required: false }
+      - name: clients
+        label: Clients (“Proudly serving”)
+        file: src/data/clients.json
+        fields:
+          - name: clients
+            label: Client names
+            label_singular: Client
+            widget: list
+            required: false
+            hint: Only list clients who are happy to be named. Leave empty to hide the band.
+            field: { name: name, label: Name, widget: string }
+      - name: settings
+        label: Site settings
+        file: src/data/settings.json
+        fields:
+          - { name: email, label: Contact email, widget: string }
+          - { name: phone, label: Phone, widget: string }
+          - { name: whatsapp, label: WhatsApp number, widget: string, required: false, hint: 'Digits only with country code, for example 919694938482. Leave empty to hide WhatsApp buttons.' }
+          - name: address
+            label: Address
+            widget: object
+            hint: Shown on the site and given to search engines.
+            fields:
+              - { name: street, label: Street, widget: string, required: false }
+              - { name: city, label: City, widget: string }
+              - { name: region, label: State, widget: string }
+              - { name: postalCode, label: PIN code, widget: string }
+              - { name: country, label: Country code, widget: string, default: IN, hint: 'Two letters, for example IN' }
+          - { name: showPrices, label: Show prices on the website, widget: boolean, default: true }
